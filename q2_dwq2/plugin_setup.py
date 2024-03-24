@@ -6,10 +6,10 @@
 # The full license is in the file LICENSE, distributed with this software.
 # ----------------------------------------------------------------------------
 
-from qiime2.plugin import Citations, Plugin
-from q2_types.feature_table import FeatureTable, Frequency
+from qiime2.plugin import Citations, Plugin, Float, Range
+from q2_types.feature_data import FeatureData, Sequence, AlignedSequence
 from q2_dwq2 import __version__
-from q2_dwq2._methods import duplicate_table
+from q2_dwq2._methods import nw_align
 
 citations = Citations.load("citations.bib", package="q2_dwq2")
 
@@ -24,15 +24,33 @@ plugin = Plugin(
 )
 
 plugin.methods.register_function(
-    function=duplicate_table,
-    inputs={'table': FeatureTable[Frequency]},
-    parameters={},
-    outputs=[('new_table', FeatureTable[Frequency])],
-    input_descriptions={'table': 'The feature table to be duplicated.'},
-    parameter_descriptions={},
-    output_descriptions={'new_table': 'The duplicated feature table.'},
-    name='Duplicate table',
-    description=("Create a copy of a feature table with a new uuid. "
-                 "This is for demonstration purposes only. 🧐"),
-    citations=[]
+    function=nw_align,
+    inputs={'seq1': FeatureData[Sequence],
+            'seq2': FeatureData[Sequence]},
+    parameters={
+        'gap_open_penalty': Float % Range(0, None, inclusive_start=False),
+        'gap_extend_penalty': Float % Range(0, None, inclusive_start=False),
+        'match_score': Float % Range(0, None, inclusive_start=False),
+        'mismatch_score': Float % Range(None, 0, inclusive_end=True)},
+    outputs={'aligned_sequences': FeatureData[AlignedSequence]},
+    input_descriptions={'seq1': 'The first sequence to align.',
+                        'seq2': 'The second sequence to align.'},
+    parameter_descriptions={
+        'gap_open_penalty': ('The penalty incurred for opening a new gap. By '
+                             'convention this is a positive number.'),
+        'gap_extend_penalty': ('The penalty incurred for extending an existing '
+                               'gap. By convention this is a positive number.'),
+        'match_score': ('The score for matching characters at an alignment '
+                        'position. By convention, this is a positive number.'),
+        'mismatch_score': ('The score for mismatching characters at an '
+                           'alignment position. By convention, this is a '
+                           'negative number.')},
+    output_descriptions={
+        'aligned_sequences': 'The pairwise aligned sequences.'
+    },
+    name='Pairwise global sequence alignment.',
+    description=("Align two DNA sequences using Needleman-Wunsch (NW). "
+                 "This is a Python implementation of NW, so it is very slow! "
+                 "This action is for demonstration purposes only. 🐌"),
+    citations=[citations['Needleman1970']]
 )
