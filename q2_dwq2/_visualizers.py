@@ -24,6 +24,9 @@ _html_template = """
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Alignment summary</title>
     <style>
+        body {
+            padding: 20px;
+        }
         p.alignment {
             font-family: 'Courier New', Courier, monospace;
         }
