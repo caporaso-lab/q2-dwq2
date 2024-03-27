@@ -10,6 +10,7 @@ from qiime2.plugin import Citations, Plugin, Float, Range
 from q2_types.feature_data import FeatureData, Sequence, AlignedSequence
 from q2_dwq2 import __version__
 from q2_dwq2._methods import nw_align
+from q2_dwq2._visualizers import summarize_alignment
 
 citations = Citations.load("citations.bib", package="q2_dwq2")
 
@@ -53,4 +54,14 @@ plugin.methods.register_function(
                  "This is a Python implementation of NW, so it is very slow! "
                  "This action is for demonstration purposes only. 🐌"),
     citations=[citations['Needleman1970']]
+)
+
+plugin.visualizers.register_function(
+    function=summarize_alignment,
+    inputs={'msa': FeatureData[AlignedSequence]},
+    input_descriptions={'msa': 'The multiple sequence alignment to summarize.'},
+    parameters={},
+    parameter_descriptions={},
+    name='Summarize an alignment.',
+    description='Summarize a multiple sequence alignment.',
 )
