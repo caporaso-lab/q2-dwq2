@@ -68,6 +68,7 @@ class SingleRecordDNAFASTAFormat(TextFileFormat):
         self._confirm_single_record()
         self._confirm_acgt_only(validation_level_to_n_chars[level])
 
+
 SingleRecordDNAFASTADirectoryFormat = model.SingleFileDirectoryFormat(
     'SingleRecordDNAFASTADirectoryFormat', 'sequence.fasta',
     SingleRecordDNAFASTAFormat)
