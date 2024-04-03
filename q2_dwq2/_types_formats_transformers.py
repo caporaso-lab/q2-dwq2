@@ -14,9 +14,9 @@ from qiime2.plugin import SemanticType, TextFileFormat, model, ValidationError
 from .plugin_setup import plugin
 
 # Define and register semantic types
-DNASequenceRecord = SemanticType("DNASequenceRecord")
+SingleDNASequence = SemanticType("SingleDNASequence")
 
-plugin.register_semantic_types(DNASequenceRecord)
+plugin.register_semantic_types(SingleDNASequence)
 
 
 # Define and register formats
@@ -78,9 +78,9 @@ plugin.register_formats(SingleRecordDNAFASTAFormat,
 
 
 # Define and register new ArtifactClass
-plugin.register_artifact_class(DNASequenceRecord,
+plugin.register_artifact_class(SingleDNASequence,
                                SingleRecordDNAFASTADirectoryFormat,
-                               description="A single DNA sequence record.")
+                               description="A single DNA sequence.")
 
 
 # Define and register transformers

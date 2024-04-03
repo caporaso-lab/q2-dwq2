@@ -12,15 +12,15 @@ from qiime2.plugin import ValidationError
 from qiime2.plugin.testing import TestPluginBase
 
 from q2_dwq2._types_formats_transformers import (
-    DNASequenceRecord, SingleRecordDNAFASTAFormat
+    SingleDNASequence, SingleRecordDNAFASTAFormat
 )
 
 
-class DNASequenceRecordTests(TestPluginBase):
+class SingleDNASequenceTests(TestPluginBase):
     package = 'q2_dwq2.tests'
 
     def test_semantic_type_registration(self):
-        self.assertRegisteredSemanticType(DNASequenceRecord)
+        self.assertRegisteredSemanticType(SingleDNASequence)
 
 
 class SingleRecordDNAFASTAFormatTests(TestPluginBase):
@@ -68,7 +68,7 @@ class SingleRecordDNAFASTAFormatTests(TestPluginBase):
                                level='min')
 
 
-class DNASequenceRecordTransformerTests(TestPluginBase):
+class SingleDNASequenceTransformerTests(TestPluginBase):
     package = 'q2_dwq2.tests'
 
     def test_single_record_fasta_to_DNA_simple1(self):
