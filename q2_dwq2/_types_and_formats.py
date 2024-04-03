@@ -11,15 +11,11 @@ from skbio.io import UnrecognizedFormatError
 
 from qiime2.plugin import SemanticType, TextFileFormat, model, ValidationError
 
-from .plugin_setup import plugin
-
-# Define and register semantic types
+# Define semantic types
 SingleDNASequence = SemanticType("SingleDNASequence")
 
-plugin.register_semantic_types(SingleDNASequence)
 
-
-# Define and register formats
+# Define formats
 class SingleRecordDNAFASTAFormat(TextFileFormat):
 
     def _confirm_single_record(self):
@@ -72,19 +68,3 @@ class SingleRecordDNAFASTAFormat(TextFileFormat):
 SingleRecordDNAFASTADirectoryFormat = model.SingleFileDirectoryFormat(
     'SingleRecordDNAFASTADirectoryFormat', 'sequence.fasta',
     SingleRecordDNAFASTAFormat)
-
-plugin.register_formats(SingleRecordDNAFASTAFormat,
-                        SingleRecordDNAFASTADirectoryFormat)
-
-
-# Define and register new ArtifactClass
-plugin.register_artifact_class(SingleDNASequence,
-                               SingleRecordDNAFASTADirectoryFormat,
-                               description="A single DNA sequence.")
-
-
-# Define and register transformers
-@plugin.register_transformer
-def _1(ff: SingleRecordDNAFASTAFormat) -> DNA:
-    # by default, DNA.read will read the first sequence in the file
-    return DNA.read(ff.open())

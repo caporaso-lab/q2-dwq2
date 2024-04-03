@@ -6,11 +6,16 @@
 # The full license is in the file LICENSE, distributed with this software.
 # ----------------------------------------------------------------------------
 
+import importlib
+
 from qiime2.plugin import Citations, Plugin, Float, Range
 from q2_types.feature_data import FeatureData, Sequence, AlignedSequence
 from q2_dwq2 import __version__
 from q2_dwq2._methods import nw_align
 from q2_dwq2._visualizers import summarize_alignment
+from q2_dwq2._types_and_formats import (
+    SingleDNASequence, SingleRecordDNAFASTAFormat,
+    SingleRecordDNAFASTADirectoryFormat)
 
 citations = Citations.load("citations.bib", package="q2_dwq2")
 
@@ -24,6 +29,19 @@ plugin = Plugin(
     citations=[citations['Caporaso-Bolyen-2024']]
 )
 
+# Register semantic types
+plugin.register_semantic_types(SingleDNASequence)
+
+# Register formats
+plugin.register_formats(SingleRecordDNAFASTAFormat,
+                        SingleRecordDNAFASTADirectoryFormat)
+
+# Define and register new ArtifactClass
+plugin.register_artifact_class(SingleDNASequence,
+                               SingleRecordDNAFASTADirectoryFormat,
+                               description="A single DNA sequence.")
+
+# Register actions
 plugin.methods.register_function(
     function=nw_align,
     inputs={'seq1': FeatureData[Sequence],
@@ -65,3 +83,5 @@ plugin.visualizers.register_function(
     name='Summarize an alignment.',
     description='Summarize a multiple sequence alignment.',
 )
+
+importlib.import_module('q2_dwq2._transformers')
