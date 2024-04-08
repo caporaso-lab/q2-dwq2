@@ -13,6 +13,7 @@ from q2_types.feature_data import FeatureData, AlignedSequence
 from q2_dwq2 import __version__
 from q2_dwq2._methods import nw_align
 from q2_dwq2._visualizers import summarize_alignment
+from q2_dwq2._examples import nw_align_example_1
 from q2_dwq2 import (
     SingleDNASequence, SingleRecordDNAFASTAFormat,
     SingleRecordDNAFASTADirectoryFormat)
@@ -71,7 +72,8 @@ plugin.methods.register_function(
     description=("Align two DNA sequences using Needleman-Wunsch (NW). "
                  "This is a Python implementation of NW, so it is very slow! "
                  "This action is for demonstration purposes only. 🐌"),
-    citations=[citations['Needleman1970']]
+    citations=[citations['Needleman1970']],
+    examples={'Align two DNA sequences.': nw_align_example_1}
 )
 
 plugin.visualizers.register_function(
