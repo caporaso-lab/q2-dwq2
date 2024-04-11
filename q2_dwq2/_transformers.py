@@ -19,3 +19,10 @@ def _1(ff: SingleRecordDNAFASTAFormat) -> DNA:
     # by default, DNA.read will read the first sequence in the file
     with ff.open() as fh:
         return DNA.read(fh)
+
+
+@plugin.register_transformer
+def _2(seq: DNA) -> SingleRecordDNAFASTAFormat:
+    ff = SingleRecordDNAFASTAFormat()
+    seq.write(str(ff))
+    return ff
