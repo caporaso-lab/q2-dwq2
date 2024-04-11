@@ -6,35 +6,21 @@
 # The full license is in the file LICENSE, distributed with this software.
 # ----------------------------------------------------------------------------
 
-import tempfile
-
 import skbio
 
 import qiime2
 
-from q2_dwq2 import SingleRecordDNAFASTAFormat
-
 
 def seq1_factory():
     seq = skbio.DNA("AACCGGTTGGCCAA", metadata={"id": "seq1"})
-    return _create_seq_artifact(seq)
+    return qiime2.Artifact.import_data(
+        "SingleDNASequence", seq, view_type=skbio.DNA)
 
 
 def seq2_factory():
     seq = skbio.DNA("AACCGCTGGCGAA", metadata={"id": "seq2"})
-    return _create_seq_artifact(seq)
-
-
-def _create_seq_artifact(seq: skbio.DNA):
-    with tempfile.NamedTemporaryFile() as f:
-        # write our skbio.DNA object to file in fasta format
-        seq.write(f)
-        # reset to the beginning of the file
-        f.seek(0)
-        # instantiate our file format (ff) object with the fasta file
-        ff = SingleRecordDNAFASTAFormat(f.name, mode='r')
-        # return the sequence packaged in a "SingleDNASequence" qiime2.Artifact
-        return qiime2.Artifact.import_data("SingleDNASequence", ff)
+    return qiime2.Artifact.import_data(
+        "SingleDNASequence", seq, view_type=skbio.DNA)
 
 
 def nw_align_example_1(use):
