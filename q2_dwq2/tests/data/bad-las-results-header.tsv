@@ -1,0 +1,4 @@
+id	reference id	percent similarity	alignment length	score	aligned query	aligned reference
+que1	ref1	100.0	5	20	AAAAA	AAAAA
+que1	ref2	90.0	10	35	AAAAATTTTT	AAAAACTTTT
+que2	ref1	95.0	20	70	AAAAATTTTTAAAAATTTTT	AAAAATTTT-AAAAATTTTT

@@ -6,13 +6,16 @@
 # The full license is in the file LICENSE, distributed with this software.
 # ----------------------------------------------------------------------------
 
+import pandas as pd
+import pandas.testing as pdt
+
 from skbio.alignment import TabularMSA
 from skbio.sequence import DNA
 
 from qiime2.plugin.testing import TestPluginBase
 from qiime2.plugin.util import transform
 
-from q2_dwq2._methods import nw_align
+from q2_dwq2._methods import nw_align, local_alignment_search
 from q2_dwq2._types_and_formats import SingleRecordDNAFASTAFormat
 
 
@@ -137,3 +140,145 @@ class NWAlignTests(TestPluginBase):
         expected = TabularMSA([aligned_sequence1, aligned_sequence2])
 
         self.assertEqual(observed, expected)
+
+
+class LocalAlignmentSearchTests(TestPluginBase):
+    package = 'q2_dwq2.tests'
+
+    def test_simple_single_query(self):
+        query_sequence = [DNA('ACACTCTCCACCCATTTGCT', metadata={'id': 'q1'})]
+        reference_sequences = [
+            DNA('ACACTCACCACCCAATTGCT', metadata={'id': 'r1'}),  # 90% match
+            DNA('ACACTCTCCACCCATTTGCT', metadata={'id': 'r2'}),  # 100% match
+            DNA('ACACTCTCCAGCCATTTGCT', metadata={'id': 'r3'}),  # 95% match
+        ]
+        observed = local_alignment_search(query_sequence, reference_sequences)
+        expected = pd.DataFrame([
+          ['q1', 'r2', 100., 20, 40., 'ACACTCTCCACCCATTTGCT',
+           'ACACTCTCCACCCATTTGCT'],
+          ['q1', 'r3', 95., 20, 35., 'ACACTCTCCACCCATTTGCT',
+           'ACACTCTCCAGCCATTTGCT'],
+          ['q1', 'r1', 90., 20, 30., 'ACACTCTCCACCCATTTGCT',
+           'ACACTCACCACCCAATTGCT']],
+         columns=['query id', 'reference id', 'percent similarity',
+                  'alignment length', 'score', 'aligned query',
+                  'aligned reference'])
+        expected.set_index(['query id', 'reference id'], inplace=True)
+        pdt.assert_frame_equal(observed, expected)
+
+    def test_simple_multi_query(self):
+        query_sequences = [DNA('ACACTCTCCACCCATTTGCT', metadata={'id': 'q1'}),
+                           DNA('ACACTCACCACCCAATTGCT', metadata={'id': 'q2'})]
+        reference_sequences = [
+            DNA('ACACTCACCACCCAATTGCT', metadata={'id': 'r1'}),  # == q2
+            DNA('ACACTCTCCACCCATTTGCT', metadata={'id': 'r2'}),  # == q1
+            DNA('ACACTCTCCAGCCATTTGCT', metadata={'id': 'r3'}),  # 95% match
+        ]
+        observed = local_alignment_search(query_sequences, reference_sequences)
+        expected = pd.DataFrame([
+          ['q1', 'r2', 100., 20, 40., 'ACACTCTCCACCCATTTGCT',
+                                      'ACACTCTCCACCCATTTGCT'],
+          ['q1', 'r3', 95., 20, 35., 'ACACTCTCCACCCATTTGCT',
+                                     'ACACTCTCCAGCCATTTGCT'],
+          ['q1', 'r1', 90., 20, 30., 'ACACTCTCCACCCATTTGCT',
+                                     'ACACTCACCACCCAATTGCT'],
+          ['q2', 'r1', 100., 20, 40., 'ACACTCACCACCCAATTGCT',
+                                      'ACACTCACCACCCAATTGCT'],
+          ['q2', 'r2', 90., 20, 30., 'ACACTCACCACCCAATTGCT',
+                                     'ACACTCTCCACCCATTTGCT'],
+          ['q2', 'r3', 85., 20, 25., 'ACACTCACCACCCAATTGCT',
+                                     'ACACTCTCCAGCCATTTGCT']],
+         columns=['query id', 'reference id', 'percent similarity',
+                  'alignment length', 'score', 'aligned query',
+                  'aligned reference'])
+        expected.set_index(['query id', 'reference id'], inplace=True)
+        pdt.assert_frame_equal(observed, expected)
+
+    def test_alt_n(self):
+        query_sequences = [DNA('ACACTCTCCACCCATTTGCT', metadata={'id': 'q1'})]
+        reference_sequences = [
+            DNA('ACACTCACCACCCAATTGCT', metadata={'id': 'r1'}),  # 90% match
+            DNA('ACACTCTCCACCCATTTGCT', metadata={'id': 'r2'}),  # 100% match
+            DNA('ACACTCTCCAGCCATTTGCT', metadata={'id': 'r3'}),  # 95% match
+        ]
+        observed = local_alignment_search(
+            query_sequences, reference_sequences, n=1)
+        expected = pd.DataFrame([
+          ['q1', 'r2', 100., 20, 40., 'ACACTCTCCACCCATTTGCT',
+           'ACACTCTCCACCCATTTGCT']
+         ],
+         columns=['query id', 'reference id', 'percent similarity',
+                  'alignment length', 'score', 'aligned query',
+                  'aligned reference'])
+        expected.set_index(['query id', 'reference id'], inplace=True)
+        pdt.assert_frame_equal(observed, expected)
+
+        n = 3
+        observed = local_alignment_search(
+            query_sequences, reference_sequences, n=n)
+        self.assertEqual(len(observed), n * len(query_sequences))
+
+        query_sequences = [DNA('ACACTCTCCACCCATTTGCT', metadata={'id': 'q1'}),
+                           DNA('ACACTCTCCACCCATTTGCT', metadata={'id': 'q2'}),
+                           DNA('ACACTCTCCACCCATTTGCT', metadata={'id': 'q3'})]
+        observed = local_alignment_search(
+            query_sequences, reference_sequences, n=n)
+        self.assertEqual(len(observed), n * len(query_sequences))
+
+    def test_retain_all_hits(self):
+        query_sequences = [DNA('ACACTCTCCACCCATTTGCT', metadata={'id': 'q1'})]
+        reference_sequences = [
+            DNA('ACACTCACCACCCAATTGCT', metadata={'id': 'r1'}),  # 90% match
+            DNA('ACACTCTCCACCCATTTGCT', metadata={'id': 'r2'}),  # 100% match
+            DNA('ACACTCTCCAGCCATTTGCT', metadata={'id': 'r3'}),  # 95% match
+            DNA('ACACTCTCCAGCCATTTGCT', metadata={'id': 'r4'}),  # 95% match
+            DNA('ACACTCTCCAGCCATTTGCT', metadata={'id': 'r5'}),  # 95% match
+            DNA('ACACTCTCCAGCCATTTGCT', metadata={'id': 'r6'}),  # 95% match
+        ]
+        observed = local_alignment_search(
+            query_sequences, reference_sequences, n=0)
+        self.assertEqual(len(observed),
+                         len(query_sequences) * len(reference_sequences))
+
+    def test_empty_input_edge_cases(self):
+        s = [DNA('ACACTCTCCACCCATTTGCT', metadata={'id': 'q1'})]
+        self.assertRaisesRegex(ValueError, "At least one",
+                               local_alignment_search, s, [])
+
+    def test_alt_alignment_parameters(self):
+        query_sequence = [DNA('ACACTCTCCACCCATTTGCT', metadata={'id': 'q1'})]
+        reference_sequences = [
+            DNA('ACACTCACCACCCAATTGCT', metadata={'id': 'r1'}),  # 90% match
+            DNA('ACACTCTCCACCCATTTGCT', metadata={'id': 'r2'}),  # 100% match
+            DNA('ACACTCTCCAGCCATTTGCT', metadata={'id': 'r3'}),  # 95% match
+            DNA('ACACTCTCCCCATTTGCT', metadata={'id': 'r4'}),  # two deletions
+        ]
+        observed_w_defaults = \
+            local_alignment_search(query_sequence, reference_sequences)
+
+        observed_w_alt_match_score = \
+            local_alignment_search(query_sequence, reference_sequences,
+                                   match_score=42)
+        self.assertNotEqual(observed_w_defaults['score'][('q1', 'r1')],
+                            observed_w_alt_match_score['score'][('q1', 'r1')])
+
+        observed_w_alt_mismatch_score = \
+            local_alignment_search(query_sequence, reference_sequences,
+                                   mismatch_score=-42)
+        self.assertNotEqual(
+            observed_w_defaults['score'][('q1', 'r1')],
+            observed_w_alt_mismatch_score['score'][('q1', 'r1')])
+
+        observed_w_alt_gap_open_penalty = \
+            local_alignment_search(query_sequence, reference_sequences,
+                                   gap_open_penalty=42)
+        self.assertNotEqual(
+            observed_w_defaults['score'][('q1', 'r4')],
+            observed_w_alt_gap_open_penalty['score'][('q1', 'r4')])
+
+        observed_w_alt_gap_extend_penalty = \
+            local_alignment_search(query_sequence, reference_sequences,
+                                   gap_extend_penalty=42)
+        self.assertNotEqual(
+            observed_w_defaults['score'][('q1', 'r4')],
+            observed_w_alt_gap_extend_penalty['score'][('q1', 'r4')])
