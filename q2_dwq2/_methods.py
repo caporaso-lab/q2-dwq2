@@ -32,6 +32,10 @@ _las_defaults = {
     'mismatch_score': -3
 }
 
+_split_seqs_defaults = {
+    'split_size': 5
+}
+
 
 def nw_align(
         seq1: DNA,
@@ -93,13 +97,44 @@ def local_alignment_search(
                'aligned reference']
     results = pd.DataFrame(results, columns=columns)
 
-    # Filter results to the top n scores for each query
-    top_results = results.groupby('query id')['score']
-    top_results = top_results.nlargest(n).reset_index(level=1, drop=True)
-    top_results = pd.merge(results, top_results, how='inner',
-                           on=['query id', 'score'])
+    # Filter results to the top n scores for each query; if n == 0,
+    # retain all hits
+    if n != 0:
+        top_results = results.groupby('query id')['score']
+        top_results = top_results.nlargest(n).reset_index(level=1, drop=True)
+        top_results = pd.merge(results, top_results, how='inner',
+                               on=['query id', 'score'])
+    else:
+        top_results = results
 
+    # sort results by descending score
     top_results.sort_values(by=['query id', 'score'], ascending=[True, False],
                             inplace=True)
     top_results.set_index(['query id', 'reference id'], inplace=True)
+
     return top_results
+
+
+# this is adapted from the itertools.batched documentation. when
+# Python 3.12 is supported, this can be replaced with a call to
+# itertools.batched
+# https://docs.python.org/3/library/itertools.html#itertools.batched
+def _batched(iterable, n):
+    # _batched('ABCDEFG', 3) → ABC DEF G
+    iterator = iter(iterable)
+    while batch := tuple(itertools.islice(iterator, n)):
+        yield batch
+
+
+def split_sequences(
+        seqs: DNAIterator,
+        split_size: int = _split_seqs_defaults['split_size']) \
+        -> DNAIterator:
+    result = {i : DNAIterator(split)
+              for i, split in enumerate(_batched(seqs, split_size))}
+    return result
+
+
+def combine_las_reports(reports: pd.DataFrame) -> pd.DataFrame:
+    results = pd.concat(reports.values())
+    return results

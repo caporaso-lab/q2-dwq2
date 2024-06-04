@@ -12,6 +12,9 @@ import pandas as pd
 from skbio.alignment import TabularMSA
 
 
+_tabulate_las_defaults = {'title': 'Local Alignment Search Results'}
+
+
 def summarize_alignment(output_dir: str, msa: TabularMSA) -> None:
     title = "Alignment summary"
     with open(os.path.join(output_dir, "index.html"), "w") as fh:
@@ -20,7 +23,7 @@ def summarize_alignment(output_dir: str, msa: TabularMSA) -> None:
 
 def tabulate_las_results(output_dir: str,
                          hits: pd.DataFrame,
-                         title: str = "Local Alignment Search Results") \
+                         title: str = _tabulate_las_defaults['title']) \
                          -> None:
     with open(os.path.join(output_dir, "index.html"), "w") as fh:
         fh.write(_html_template % (title, hits.to_html()))

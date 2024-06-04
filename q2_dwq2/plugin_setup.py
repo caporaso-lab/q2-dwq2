@@ -9,10 +9,11 @@
 import importlib
 
 from qiime2.plugin import (Citations, Plugin, Float, Range, Visualization, Int,
-                           Str)
+                           Str, Collection)
 from q2_types.feature_data import FeatureData, AlignedSequence, Sequence
 from q2_dwq2 import __version__
-from q2_dwq2._methods import nw_align, local_alignment_search
+from q2_dwq2._methods import (nw_align, local_alignment_search,
+                              split_sequences, combine_las_reports)
 from q2_dwq2._visualizers import (
     summarize_alignment, tabulate_las_results)
 from q2_dwq2._pipelines import align_and_summarize, search_and_summarize
@@ -100,7 +101,7 @@ _local_alignment_search_inputs = {
     'query_seqs': SingleDNASequence | FeatureData[Sequence],
     'reference_seqs': FeatureData[Sequence]}
 _local_alignment_search_parameters = {
-    'n': Int % Range(1, None),
+    'n': Int % Range(0, None),
     'gap_open_penalty': Float % Range(0, None, inclusive_start=False),
     'gap_extend_penalty': Float % Range(0, None, inclusive_start=False),
     'match_score': Float % Range(0, None, inclusive_start=False),
@@ -112,7 +113,8 @@ _local_alignment_search_input_descriptions = {
     'query_seqs': "Sequence(s) to query against the reference sequences.",
     'reference_seqs': "The reference sequences."}
 _local_alignment_search_parameter_descriptions = {
-    'n': "Maximum number of top-scoring hits to return.",
+    'n': ('Maximum number of top-scoring hits to return. Pass zero to '
+          'retain all hits.'),
     'gap_open_penalty': ('The penalty incurred for opening a new gap. By '
                          'convention this is a positive number.'),
     'gap_extend_penalty': ('The penalty incurred for extending an existing '
@@ -149,6 +151,38 @@ plugin.methods.register_function(
     examples={}
 )
 
+_split_sequences_parameters = {'split_size': Int % Range(1, None)}
+_split_sequences_parameter_descriptions = {
+    'split_size': ('The number of sequences to include in each split. (The '
+                   'last split may have fewer than split_size sequences).')
+}
+
+plugin.methods.register_function(
+    function=split_sequences,
+    inputs={'seqs': FeatureData[Sequence]},
+    parameters=_split_sequences_parameters,
+    outputs={'splits': Collection[FeatureData[Sequence]]},
+    input_descriptions={'seqs': 'The collection of sequences to be split.'},
+    parameter_descriptions=_split_sequences_parameter_descriptions,
+    output_descriptions={'splits': 'The splits of sequences.'},
+    name='Split sequences.',
+    description=('Split a collection of sequences into splits of split_size '
+                 'sequences.')
+)
+
+plugin.methods.register_function(
+    function=combine_las_reports,
+    inputs={'reports': Collection[LocalAlignmentSearchResults]},
+    parameters={},
+    outputs={'report': LocalAlignmentSearchResults},
+    input_descriptions={'reports': 'The individual reports to be combined.'},
+    parameter_descriptions={},
+    output_descriptions={'report': 'The combined report.'},
+    name='Combine LAS reports.',
+    description=('Combine multiple Local Alignment Search reports into a '
+                 'single report in the order in which they are received.')
+)
+
 # Register visualizers
 plugin.visualizers.register_function(
     function=summarize_alignment,
@@ -161,12 +195,17 @@ plugin.visualizers.register_function(
     citations=[],
 )
 
+_tabulate_las_parameters = {'title': Str}
+_tabulate_las_parameter_descriptions = {
+    'title': 'Title to use inside visualization.'
+}
+
 plugin.visualizers.register_function(
     function=tabulate_las_results,
     inputs={'hits': LocalAlignmentSearchResults},
-    parameters={'title': Str},
+    parameters=_tabulate_las_parameters,
     input_descriptions={'hits': 'Table of alignment search results.'},
-    parameter_descriptions={'title': 'Title to use inside visualization.'},
+    parameter_descriptions=_tabulate_las_parameter_descriptions,
     name="Tabulate LAS results.",
     description=("Generate a visual representation of tabular local alignment "
                  "search results."),
@@ -206,9 +245,22 @@ plugin.pipelines.register_function(
               align_and_summarize_example_1}
 )
 
+_search_and_summarize_parameters = {}
+_search_and_summarize_parameters.update(_local_alignment_search_parameters)
+_search_and_summarize_parameters.update(_split_sequences_parameters)
+_search_and_summarize_parameters.update(_tabulate_las_parameters)
+
 _search_and_summarize_outputs = {}
 _search_and_summarize_outputs.update(_local_alignment_search_outputs)
 _search_and_summarize_outputs['hits_table'] = Visualization
+
+_search_and_summarize_parameter_descriptions = {}
+_search_and_summarize_parameter_descriptions.update(
+    _local_alignment_search_parameter_descriptions)
+_search_and_summarize_parameter_descriptions.update(
+    _split_sequences_parameter_descriptions)
+_search_and_summarize_parameter_descriptions.update(
+    _tabulate_las_parameter_descriptions)
 
 _search_and_summarize_output_descriptions = {}
 _search_and_summarize_output_descriptions.update(
@@ -219,10 +271,10 @@ _search_and_summarize_output_descriptions['hits_table'] = \
 plugin.pipelines.register_function(
     function=search_and_summarize,
     inputs=_local_alignment_search_inputs,
-    parameters=_local_alignment_search_parameters,
+    parameters=_search_and_summarize_parameters,
     outputs=_search_and_summarize_outputs,
     input_descriptions=_local_alignment_search_input_descriptions,
-    parameter_descriptions=_local_alignment_search_parameter_descriptions,
+    parameter_descriptions=_search_and_summarize_parameter_descriptions,
     output_descriptions=_search_and_summarize_output_descriptions,
     name="Local alignment search with tabular output report.",
     description=("Perform local alignment search of a query sequence against "
