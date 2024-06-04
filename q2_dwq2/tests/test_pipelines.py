@@ -14,6 +14,7 @@ import skbio
 import qiime2
 from qiime2.plugin.testing import TestPluginBase
 from q2_types.feature_data import DNAIterator
+from qiime2.sdk.parallel_config import ParallelConfig
 
 
 class AlignAndSummarizeTests(TestPluginBase):
@@ -58,15 +59,17 @@ class AlignAndSummarizeTests(TestPluginBase):
 class SearchAndSummarizeTests(TestPluginBase):
     package = 'q2_dwq2.tests'
 
-    def test_simple1(self):
-        search_and_summarize_pipeline = \
+    def setUp(self):
+        super().setUp()
+
+        self.search_and_summarize_pipeline = \
             self.plugin.pipelines['search_and_summarize']
         query_sequences = [skbio.DNA('ACACTCTCCACCCATTTGCT',
                                      metadata={'id': 'q1'}),
                            skbio.DNA('ACACTCACCACCCAATTGCT',
                                      metadata={'id': 'q2'})]
         query_sequences = DNAIterator(query_sequences)
-        query_sequences_art = qiime2.Artifact.import_data(
+        self.query_sequences_art = qiime2.Artifact.import_data(
             "FeatureData[Sequence]", query_sequences, view_type=DNAIterator
         )
         reference_sequences = [
@@ -75,13 +78,11 @@ class SearchAndSummarizeTests(TestPluginBase):
             skbio.DNA('ACACTCTCCAGCCATTTGCT', metadata={'id': 'r3'}),
         ]
         reference_sequences = DNAIterator(reference_sequences)
-        reference_sequences_art = qiime2.Artifact.import_data(
+        self.reference_sequences_art = qiime2.Artifact.import_data(
             "FeatureData[Sequence]", reference_sequences, view_type=DNAIterator
         )
-        observed_hits, observed_viz = search_and_summarize_pipeline(
-            query_sequences_art, reference_sequences_art
-        )
 
+    def _test_simple1_helper(self, observed_hits, observed_viz):
         expected_hits = pd.DataFrame([
           ['q1', 'r2', 100., 20, 40., 'ACACTCTCCACCCATTTGCT',
                                       'ACACTCTCCACCCATTTGCT'],
@@ -113,3 +114,16 @@ class SearchAndSummarizeTests(TestPluginBase):
             self.assertIn('r2', observed_index)
             self.assertIn('ACACTCACCACCCAATTGCT', observed_index)
             self.assertIn('ACACTCTCCACCCATTTGCT', observed_index)
+
+    def test_simple1_serial(self):
+
+        observed_hits, observed_viz = self.search_and_summarize_pipeline(
+            self.query_sequences_art, self.reference_sequences_art)
+        self._test_simple1_helper(observed_hits, observed_viz)
+
+    def test_simple1_parallel(self):
+        with ParallelConfig():
+            observed_hits, observed_viz = \
+                self.search_and_summarize_pipeline.parallel(
+                    self.query_sequences_art, self.reference_sequences_art)
+            self._test_simple1_helper(observed_hits, observed_viz)
