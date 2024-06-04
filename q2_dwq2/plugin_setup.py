@@ -9,10 +9,11 @@
 import importlib
 
 from qiime2.plugin import (Citations, Plugin, Float, Range, Visualization, Int,
-                           Str)
+                           Str, Collection)
 from q2_types.feature_data import FeatureData, AlignedSequence, Sequence
 from q2_dwq2 import __version__
-from q2_dwq2._methods import nw_align, local_alignment_search
+from q2_dwq2._methods import (nw_align, local_alignment_search,
+                              chunk_sequences, collate_las_reports)
 from q2_dwq2._visualizers import (
     summarize_alignment, tabulate_las_results)
 from q2_dwq2._pipelines import align_and_summarize, search_and_summarize
@@ -100,7 +101,7 @@ _local_alignment_search_inputs = {
     'query_seqs': SingleDNASequence | FeatureData[Sequence],
     'reference_seqs': FeatureData[Sequence]}
 _local_alignment_search_parameters = {
-    'n': Int % Range(1, None),
+    'n': Int % Range(0, None),
     'gap_open_penalty': Float % Range(0, None, inclusive_start=False),
     'gap_extend_penalty': Float % Range(0, None, inclusive_start=False),
     'match_score': Float % Range(0, None, inclusive_start=False),
@@ -112,7 +113,8 @@ _local_alignment_search_input_descriptions = {
     'query_seqs': "Sequence(s) to query against the reference sequences.",
     'reference_seqs': "The reference sequences."}
 _local_alignment_search_parameter_descriptions = {
-    'n': "Maximum number of top-scoring hits to return.",
+    'n': ('Maximum number of top-scoring hits to return. Pass zero to '
+          'retain all hits.'),
     'gap_open_penalty': ('The penalty incurred for opening a new gap. By '
                          'convention this is a positive number.'),
     'gap_extend_penalty': ('The penalty incurred for extending an existing '
@@ -147,6 +149,37 @@ plugin.methods.register_function(
     citations=[citations['Altschul1990'], citations['Smith1981'],
                citations['Caporaso-IAB2']],
     examples={}
+)
+
+plugin.methods.register_function(
+    function=chunk_sequences,
+    inputs={'seqs': FeatureData[Sequence]},
+    parameters={'chunk_size': Int % Range(1, None)},
+    outputs={'chunked_sequences': Collection[FeatureData[Sequence]]},
+    input_descriptions={'seqs': 'The collection of sequences to be split '
+                                'into multiple chunks.'},
+    parameter_descriptions={'chunk_size': ('The number of sequences to '
+                                           'include in each chunk. (The '
+                                           'last chunk may have fewer than '
+                                           'chunk_size sequences).')},
+    output_descriptions={'chunked_sequences': 'The chunks of sequences.'},
+    name='Chunk sequences.',
+    description=('Split a collection of sequences into chunks of chunk_size '
+                 'sequences.')
+)
+
+plugin.methods.register_function(
+    function=collate_las_reports,
+    inputs={'reports': Collection[LocalAlignmentSearchResults]},
+    parameters={'n': _local_alignment_search_parameters['n']},
+    outputs={'report': LocalAlignmentSearchResults},
+    input_descriptions={'reports': 'The individual reports to be collated.'},
+    parameter_descriptions={
+        'n': _local_alignment_search_parameter_descriptions['n']},
+    output_descriptions={'report': 'The collated report.'},
+    name='Collate LAS reports.',
+    description=('Collate (i.e., concatenate) multiple Local Alignment '
+                 'Search reports into a single report.')
 )
 
 # Register visualizers

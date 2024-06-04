@@ -34,13 +34,22 @@ def search_and_summarize(
         gap_extend_penalty=_las_defaults['gap_extend_penalty'],
         match_score=_las_defaults['match_score'],
         mismatch_score=_las_defaults['mismatch_score']):
+    chunk_action = ctx.get_action('dwq2', 'chunk_sequences')
+    collate_action = ctx.get_action('dwq2', 'collate_las_reports')
     las_action = ctx.get_action('dwq2', 'local_alignment_search')
     tabulate_las_results_action = ctx.get_action('dwq2', 'tabulate_las_results')
 
-    las_results, = las_action(
-        query_seqs, reference_seqs, n=n, gap_open_penalty=gap_open_penalty,
-        gap_extend_penalty=gap_extend_penalty, match_score=match_score,
-        mismatch_score=mismatch_score)
+    reference_chunks, = chunk_action(reference_seqs)
+
+    las_results = []
+    for r in reference_chunks.values():
+        las_result, = las_action(
+            query_seqs, r, n=0, gap_open_penalty=gap_open_penalty,
+            gap_extend_penalty=gap_extend_penalty, match_score=match_score,
+            mismatch_score=mismatch_score)
+        las_results.append(las_result)
+
+    las_results, = collate_action(las_results, n=n)
     result_table, = tabulate_las_results_action(las_results)
 
     return (las_results, result_table)

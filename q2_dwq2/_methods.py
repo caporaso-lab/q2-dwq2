@@ -50,6 +50,22 @@ def nw_align(
     return msa
 
 
+def _filter_and_sort_las_results(results, n):
+    if n == 0:
+        top_results = results
+    else:
+        # Filter results to the top n scores for each query
+        top_results = results.groupby('query id')['score']
+        top_results = top_results.nlargest(n).reset_index(level=1, drop=True)
+        top_results = pd.merge(results, top_results, how='inner',
+                               on=['query id', 'score'])
+
+    top_results.sort_values(by=['query id', 'score'], ascending=[True, False],
+                            inplace=True)
+    top_results.set_index(['query id', 'reference id'], inplace=True)
+    return top_results
+
+
 def local_alignment_search(
         query_seqs: DNAIterator,
         reference_seqs: DNAIterator,
@@ -93,13 +109,36 @@ def local_alignment_search(
                'aligned reference']
     results = pd.DataFrame(results, columns=columns)
 
-    # Filter results to the top n scores for each query
-    top_results = results.groupby('query id')['score']
-    top_results = top_results.nlargest(n).reset_index(level=1, drop=True)
-    top_results = pd.merge(results, top_results, how='inner',
-                           on=['query id', 'score'])
+    top_results = _filter_and_sort_las_results(results, n)
 
-    top_results.sort_values(by=['query id', 'score'], ascending=[True, False],
-                            inplace=True)
-    top_results.set_index(['query id', 'reference id'], inplace=True)
+    return top_results
+
+
+# this is adapted from the itertools.batched documentation. when
+# Python 3.12 is supported, this can be replaced with a call to
+# itertools.batched
+# https://docs.python.org/3/library/itertools.html#itertools.batched
+def _batched(iterable, n):
+    # _batched('ABCDEFG', 3) → ABC DEF G
+    iterator = iter(iterable)
+    while batch := tuple(itertools.islice(iterator, n)):
+        yield batch
+
+
+def chunk_sequences(seqs: DNAIterator,
+                    chunk_size: int = 5) -> DNAIterator:
+    result = {i : DNAIterator(chunk)
+              for i, chunk in enumerate(_batched(seqs, chunk_size))}
+
+    return result
+
+
+def collate_las_reports(reports: pd.DataFrame,
+                        n: int = _las_defaults['n']) -> pd.DataFrame:
+    # integrate selection of top n results per query?
+    results = pd.concat(reports.values())
+    results.reset_index(inplace=True)
+
+    top_results = _filter_and_sort_las_results(results, n)
+
     return top_results

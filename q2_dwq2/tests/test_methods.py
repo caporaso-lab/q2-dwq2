@@ -195,14 +195,14 @@ class LocalAlignmentSearchTests(TestPluginBase):
         pdt.assert_frame_equal(observed, expected)
 
     def test_alt_n(self):
-        query_sequence = [DNA('ACACTCTCCACCCATTTGCT', metadata={'id': 'q1'})]
+        query_sequences = [DNA('ACACTCTCCACCCATTTGCT', metadata={'id': 'q1'})]
         reference_sequences = [
             DNA('ACACTCACCACCCAATTGCT', metadata={'id': 'r1'}),  # 90% match
             DNA('ACACTCTCCACCCATTTGCT', metadata={'id': 'r2'}),  # 100% match
             DNA('ACACTCTCCAGCCATTTGCT', metadata={'id': 'r3'}),  # 95% match
         ]
         observed = local_alignment_search(
-            query_sequence, reference_sequences, n=1)
+            query_sequences, reference_sequences, n=1)
         expected = pd.DataFrame([
           ['q1', 'r2', 100., 20, 40., 'ACACTCTCCACCCATTTGCT',
            'ACACTCTCCACCCATTTGCT']
@@ -212,6 +212,34 @@ class LocalAlignmentSearchTests(TestPluginBase):
                   'aligned reference'])
         expected.set_index(['query id', 'reference id'], inplace=True)
         pdt.assert_frame_equal(observed, expected)
+
+        n = 3
+        observed = local_alignment_search(
+            query_sequences, reference_sequences, n=n)
+        self.assertEqual(len(observed), n * len(query_sequences))
+
+        query_sequences = [DNA('ACACTCTCCACCCATTTGCT', metadata={'id': 'q1'}),
+                           DNA('ACACTCTCCACCCATTTGCT', metadata={'id': 'q2'}),
+                           DNA('ACACTCTCCACCCATTTGCT', metadata={'id': 'q3'})]
+        observed = local_alignment_search(
+            query_sequences, reference_sequences, n=n)
+        self.assertEqual(len(observed), n * len(query_sequences))
+
+    def test_retain_all_hits(self):
+        query_sequences = [DNA('ACACTCTCCACCCATTTGCT', metadata={'id': 'q1'})]
+        reference_sequences = [
+            DNA('ACACTCACCACCCAATTGCT', metadata={'id': 'r1'}),  # 90% match
+            DNA('ACACTCTCCACCCATTTGCT', metadata={'id': 'r2'}),  # 100% match
+            DNA('ACACTCTCCAGCCATTTGCT', metadata={'id': 'r3'}),  # 95% match
+            DNA('ACACTCTCCAGCCATTTGCT', metadata={'id': 'r4'}),  # 95% match
+            DNA('ACACTCTCCAGCCATTTGCT', metadata={'id': 'r5'}),  # 95% match
+            DNA('ACACTCTCCAGCCATTTGCT', metadata={'id': 'r6'}),  # 95% match
+        ]
+        observed = local_alignment_search(
+            query_sequences, reference_sequences, n=0)
+        print(observed)
+        self.assertEqual(len(observed),
+                         len(query_sequences) * len(reference_sequences))
 
     def test_empty_input_edge_cases(self):
         s = [DNA('ACACTCTCCACCCATTTGCT', metadata={'id': 'q1'})]
