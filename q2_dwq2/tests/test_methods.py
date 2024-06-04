@@ -15,7 +15,8 @@ from skbio.sequence import DNA
 from qiime2.plugin.testing import TestPluginBase
 from qiime2.plugin.util import transform
 
-from q2_dwq2._methods import nw_align, local_alignment_search
+from q2_dwq2._methods import (nw_align, local_alignment_search, split_sequences,
+                              combine_las_reports)
 from q2_dwq2._types_and_formats import SingleRecordDNAFASTAFormat
 
 
@@ -282,3 +283,192 @@ class LocalAlignmentSearchTests(TestPluginBase):
         self.assertNotEqual(
             observed_w_defaults['score'][('q1', 'r4')],
             observed_w_alt_gap_extend_penalty['score'][('q1', 'r4')])
+
+
+class SplitSequencesTests(TestPluginBase):
+    package = 'q2_dwq2.tests'
+
+    def _flatten_splits(self, splits):
+        result = []
+        for k, dna_iter in splits.items():
+            result.extend(list(dna_iter))
+        return result
+
+    def test_one_seq_per_split(self):
+        sequences = [
+            DNA('ACACTCACCACCCAATTGCT', metadata={'id': 'r1'}),
+            DNA('ACACTCTCCACCCATTTGCT', metadata={'id': 'r2'}),
+            DNA('ACACTCTCCAGCCATTTGCT', metadata={'id': 'r3'}),
+            DNA('ACACTCTCCAGCCATTTGCT', metadata={'id': 'r4'}),
+            DNA('ACACTCTCCAGCCATTTGCT', metadata={'id': 'r5'}),
+            DNA('ACACTCTCCAGCCATTTGCT', metadata={'id': 'r6'}),
+        ]
+
+        # confirm the expected number of splits are returned
+        observed = split_sequences(sequences, split_size=1)
+        self.assertEqual(len(observed), 6)
+        # confirm that all input sequences are contained in the
+        # split sequences
+        self.assertEqual(self._flatten_splits(observed), sequences)
+
+        sequences = [
+            DNA('ACACTCACCACCCAATTGCT', metadata={'id': 'r1'}),
+            DNA('ACACTCTCCACCCATTTGCT', metadata={'id': 'r2'}),
+        ]
+
+        observed = split_sequences(sequences, split_size=1)
+        self.assertEqual(len(observed), 2)
+        self.assertEqual(self._flatten_splits(observed), sequences)
+
+    def test_one_split(self):
+        sequences = [
+            DNA('ACACTCACCACCCAATTGCT', metadata={'id': 'r1'}),
+            DNA('ACACTCTCCACCCATTTGCT', metadata={'id': 'r2'}),
+            DNA('ACACTCTCCAGCCATTTGCT', metadata={'id': 'r3'}),
+            DNA('ACACTCTCCAGCCATTTGCT', metadata={'id': 'r4'}),
+            DNA('ACACTCTCCAGCCATTTGCT', metadata={'id': 'r5'}),
+            DNA('ACACTCTCCAGCCATTTGCT', metadata={'id': 'r6'}),
+        ]
+
+        observed = split_sequences(sequences, split_size=6)
+        self.assertEqual(len(observed), 1)
+        self.assertEqual(self._flatten_splits(observed), sequences)
+
+        sequences = [
+            DNA('ACACTCACCACCCAATTGCT', metadata={'id': 'r1'}),
+            DNA('ACACTCTCCACCCATTTGCT', metadata={'id': 'r2'}),
+        ]
+
+        observed = split_sequences(sequences, split_size=2)
+        self.assertEqual(len(observed), 1)
+        self.assertEqual(self._flatten_splits(observed), sequences)
+
+    def test_multiple_seqs_multiple_splits(self):
+        sequences = [
+            DNA('ACACTCACCACCCAATTGCT', metadata={'id': 'r1'}),
+            DNA('ACACTCTCCACCCATTTGCT', metadata={'id': 'r2'}),
+            DNA('ACACTCTCCAGCCATTTGCT', metadata={'id': 'r3'}),
+            DNA('ACACTCTCCAGCCATTTGCT', metadata={'id': 'r4'}),
+            DNA('ACACTCTCCAGCCATTTGCT', metadata={'id': 'r5'}),
+            DNA('ACACTCTCCAGCCATTTGCT', metadata={'id': 'r6'}),
+        ]
+
+        observed = split_sequences(sequences, split_size=2)
+        self.assertEqual(len(observed), 3)
+        self.assertEqual(self._flatten_splits(observed), sequences)
+
+        observed = split_sequences(sequences, split_size=3)
+        self.assertEqual(len(observed), 2)
+        self.assertEqual(self._flatten_splits(observed), sequences)
+
+        observed = split_sequences(sequences, split_size=4)
+        self.assertEqual(len(observed), 2)
+        self.assertEqual(self._flatten_splits(observed), sequences)
+
+        observed = split_sequences(sequences, split_size=5)
+        self.assertEqual(len(observed), 2)
+        self.assertEqual(self._flatten_splits(observed), sequences)
+
+
+class CombineLasReportsTests(TestPluginBase):
+    package = 'q2_dwq2.tests'
+
+    def test_combine_two_las_reports(self):
+        expected = pd.DataFrame([
+          ['q1', 'r2', 100., 20, 40., 'ACACTCTCCACCCATTTGCT',
+                                      'ACACTCTCCACCCATTTGCT'],
+          ['q1', 'r3', 95., 20, 35., 'ACACTCTCCACCCATTTGCT',
+                                     'ACACTCTCCAGCCATTTGCT'],
+          ['q1', 'r1', 90., 20, 30., 'ACACTCTCCACCCATTTGCT',
+                                     'ACACTCACCACCCAATTGCT'],
+          ['q2', 'r1', 100., 20, 40., 'ACACTCACCACCCAATTGCT',
+                                      'ACACTCACCACCCAATTGCT'],
+          ['q2', 'r2', 90., 20, 30., 'ACACTCACCACCCAATTGCT',
+                                     'ACACTCTCCACCCATTTGCT'],
+          ['q2', 'r3', 85., 20, 25., 'ACACTCACCACCCAATTGCT',
+                                     'ACACTCTCCAGCCATTTGCT']],
+         columns=['query id', 'reference id', 'percent similarity',
+                  'alignment length', 'score', 'aligned query',
+                  'aligned reference'])
+        expected.set_index(['query id', 'reference id'], inplace=True)
+
+        part1 = pd.DataFrame([
+          ['q1', 'r2', 100., 20, 40., 'ACACTCTCCACCCATTTGCT',
+                                      'ACACTCTCCACCCATTTGCT'],
+          ['q1', 'r3', 95., 20, 35., 'ACACTCTCCACCCATTTGCT',
+                                     'ACACTCTCCAGCCATTTGCT'],
+          ['q1', 'r1', 90., 20, 30., 'ACACTCTCCACCCATTTGCT',
+                                     'ACACTCACCACCCAATTGCT']],
+         columns=['query id', 'reference id', 'percent similarity',
+                  'alignment length', 'score', 'aligned query',
+                  'aligned reference'])
+        part1.set_index(['query id', 'reference id'], inplace=True)
+
+        part2 = pd.DataFrame([
+          ['q2', 'r1', 100., 20, 40., 'ACACTCACCACCCAATTGCT',
+                                      'ACACTCACCACCCAATTGCT'],
+          ['q2', 'r2', 90., 20, 30., 'ACACTCACCACCCAATTGCT',
+                                     'ACACTCTCCACCCATTTGCT'],
+          ['q2', 'r3', 85., 20, 25., 'ACACTCACCACCCAATTGCT',
+                                     'ACACTCTCCAGCCATTTGCT']],
+         columns=['query id', 'reference id', 'percent similarity',
+                  'alignment length', 'score', 'aligned query',
+                  'aligned reference'])
+        part2.set_index(['query id', 'reference id'], inplace=True)
+
+        observed = combine_las_reports({0: part1, 1: part2})
+
+        pdt.assert_frame_equal(observed, expected)
+
+    def test_combine_three_las_reports(self):
+        expected = pd.DataFrame([
+          ['q1', 'r1', 100., 20, 40., 'ACACTCTCCACCCATTTGCT',
+                                      'ACACTCTCCACCCATTTGCT'],
+          ['q1', 'r2', 95., 20, 35., 'ACACTCTCCACCCATTTGCT',
+                                     'ACACTCTCCAGCCATTTGCT'],
+          ['q2', 'r3', 90., 20, 30., 'ACACTCTCCACCCATTTGCT',
+                                     'ACACTCACCACCCAATTGCT'],
+          ['q2', 'r4', 100., 20, 40., 'ACACTCACCACCCAATTGCT',
+                                      'ACACTCACCACCCAATTGCT'],
+          ['q3', 'r2', 90., 20, 30., 'ACACTCACCACCCAATTGCT',
+                                     'ACACTCTCCACCCATTTGCT'],
+          ['q3', 'r3', 85., 20, 25., 'ACACTCACCACCCAATTGCT',
+                                     'ACACTCTCCAGCCATTTGCT']],
+         columns=['query id', 'reference id', 'percent similarity',
+                  'alignment length', 'score', 'aligned query',
+                  'aligned reference'])
+        expected.set_index(['query id', 'reference id'], inplace=True)
+
+        part1 = pd.DataFrame([
+          ['q1', 'r1', 100., 20, 40., 'ACACTCTCCACCCATTTGCT',
+                                      'ACACTCTCCACCCATTTGCT'],
+          ['q1', 'r2', 95., 20, 35., 'ACACTCTCCACCCATTTGCT',
+                                     'ACACTCTCCAGCCATTTGCT']],
+         columns=['query id', 'reference id', 'percent similarity',
+                  'alignment length', 'score', 'aligned query',
+                  'aligned reference'])
+        part1.set_index(['query id', 'reference id'], inplace=True)
+
+        part2 = pd.DataFrame([
+          ['q2', 'r3', 90., 20, 30., 'ACACTCTCCACCCATTTGCT',
+                                     'ACACTCACCACCCAATTGCT'],
+          ['q2', 'r4', 100., 20, 40., 'ACACTCACCACCCAATTGCT',
+                                      'ACACTCACCACCCAATTGCT']],
+         columns=['query id', 'reference id', 'percent similarity',
+                  'alignment length', 'score', 'aligned query',
+                  'aligned reference'])
+        part2.set_index(['query id', 'reference id'], inplace=True)
+
+        part3 = pd.DataFrame([
+          ['q3', 'r2', 90., 20, 30., 'ACACTCACCACCCAATTGCT',
+                                     'ACACTCTCCACCCATTTGCT'],
+          ['q3', 'r3', 85., 20, 25., 'ACACTCACCACCCAATTGCT',
+                                     'ACACTCTCCAGCCATTTGCT']],
+         columns=['query id', 'reference id', 'percent similarity',
+                  'alignment length', 'score', 'aligned query',
+                  'aligned reference'])
+        part3.set_index(['query id', 'reference id'], inplace=True)
+
+        observed = combine_las_reports({0: part1, 1: part2, 2: part3})
+
+        pdt.assert_frame_equal(observed, expected)

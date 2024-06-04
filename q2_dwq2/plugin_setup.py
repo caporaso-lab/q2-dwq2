@@ -9,10 +9,11 @@
 import importlib
 
 from qiime2.plugin import (Citations, Plugin, Float, Range, Visualization, Int,
-                           Str)
+                           Str, Collection)
 from q2_types.feature_data import FeatureData, AlignedSequence, Sequence
 from q2_dwq2 import __version__
-from q2_dwq2._methods import nw_align, local_alignment_search
+from q2_dwq2._methods import (nw_align, local_alignment_search,
+                              split_sequences, combine_las_reports)
 from q2_dwq2._visualizers import (
     summarize_alignment, tabulate_las_results)
 from q2_dwq2._pipelines import align_and_summarize, search_and_summarize
@@ -150,6 +151,38 @@ plugin.methods.register_function(
     examples={}
 )
 
+_split_sequences_parameters = {'split_size': Int % Range(1, None)}
+_split_sequences_parameter_descriptions = {
+    'split_size': ('The number of sequences to include in each split. (The '
+                   'last split may have fewer than split_size sequences).')
+}
+
+plugin.methods.register_function(
+    function=split_sequences,
+    inputs={'seqs': FeatureData[Sequence]},
+    parameters=_split_sequences_parameters,
+    outputs={'splits': Collection[FeatureData[Sequence]]},
+    input_descriptions={'seqs': 'The collection of sequences to be split.'},
+    parameter_descriptions=_split_sequences_parameter_descriptions,
+    output_descriptions={'splits': 'The splits of sequences.'},
+    name='Split sequences.',
+    description=('Split a collection of sequences into splits of split_size '
+                 'sequences.')
+)
+
+plugin.methods.register_function(
+    function=combine_las_reports,
+    inputs={'reports': Collection[LocalAlignmentSearchResults]},
+    parameters={},
+    outputs={'report': LocalAlignmentSearchResults},
+    input_descriptions={'reports': 'The individual reports to be combined.'},
+    parameter_descriptions={},
+    output_descriptions={'report': 'The combined report.'},
+    name='Combine LAS reports.',
+    description=('Combine multiple Local Alignment Search reports into a '
+                 'single report in the order in which they are received.')
+)
+
 # Register visualizers
 plugin.visualizers.register_function(
     function=summarize_alignment,
@@ -214,6 +247,7 @@ plugin.pipelines.register_function(
 
 _search_and_summarize_parameters = {}
 _search_and_summarize_parameters.update(_local_alignment_search_parameters)
+_search_and_summarize_parameters.update(_split_sequences_parameters)
 _search_and_summarize_parameters.update(_tabulate_las_parameters)
 
 _search_and_summarize_outputs = {}
@@ -223,6 +257,8 @@ _search_and_summarize_outputs['hits_table'] = Visualization
 _search_and_summarize_parameter_descriptions = {}
 _search_and_summarize_parameter_descriptions.update(
     _local_alignment_search_parameter_descriptions)
+_search_and_summarize_parameter_descriptions.update(
+    _split_sequences_parameter_descriptions)
 _search_and_summarize_parameter_descriptions.update(
     _tabulate_las_parameter_descriptions)
 
