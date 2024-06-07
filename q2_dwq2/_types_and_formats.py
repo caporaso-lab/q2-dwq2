@@ -6,6 +6,8 @@
 # The full license is in the file LICENSE, distributed with this software.
 # ----------------------------------------------------------------------------
 
+import csv
+
 from skbio import DNA
 from skbio.io import UnrecognizedFormatError
 
@@ -13,6 +15,7 @@ from qiime2.plugin import SemanticType, TextFileFormat, model, ValidationError
 
 # Define semantic types
 SingleDNASequence = SemanticType("SingleDNASequence")
+LocalAlignmentSearchResults = SemanticType("LocalAlignmentSearchResults")
 
 
 # Define formats
@@ -68,3 +71,42 @@ class SingleRecordDNAFASTAFormat(TextFileFormat):
 SingleRecordDNAFASTADirectoryFormat = model.SingleFileDirectoryFormat(
     'SingleRecordDNAFASTADirectoryFormat', 'sequence.fasta',
     SingleRecordDNAFASTAFormat)
+
+
+class LocalAlignmentSearchResultsFormat(TextFileFormat):
+
+    _expected_headers = [
+        'query id', 'reference id',
+        'percent similarity', 'alignment length', 'score',
+        'aligned query', 'aligned reference']
+    _expected_n_fields = len(_expected_headers)
+
+    def _validate_(self, level):
+        if level == 'min':
+            max_lines = 5
+        else:
+            max_lines = None
+
+        with self.open() as fh:
+            rows = csv.reader(fh, delimiter='\t')
+            row = next(rows)
+            for actual, expected in zip(row, self._expected_headers):
+                if actual != expected:
+                    raise ValidationError(
+                        f"Found header {actual} but expected header {expected}."
+                    )
+            line_num = 2
+            for row in rows:
+                if len(row) != self._expected_n_fields:
+                    raise ValidationError(
+                        f"Line {line_num}: Found {len(row)} fields but "
+                        f"expected {self._expected_n_fields}."
+                    )
+                line_num += 1
+                if max_lines is not None and max_lines == line_num - 2:
+                    break
+
+
+LocalAlignmentSearchResultsDirectoryFormat = model.SingleFileDirectoryFormat(
+    'LocalAlignmentSearchResultsDirectoryFormat', 'hits.tsv',
+    LocalAlignmentSearchResultsFormat)

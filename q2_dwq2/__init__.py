@@ -11,7 +11,9 @@ from ._version import get_versions
 
 from ._types_and_formats import (
     SingleDNASequence, SingleRecordDNAFASTAFormat,
-    SingleRecordDNAFASTADirectoryFormat)
+    SingleRecordDNAFASTADirectoryFormat, LocalAlignmentSearchResults,
+    LocalAlignmentSearchResultsFormat,
+    LocalAlignmentSearchResultsDirectoryFormat)
 
 __version__ = get_versions()["version"]
 del get_versions
@@ -21,4 +23,6 @@ __version__ = _version.get_versions()['version']
 
 __all__ = [
     "SingleDNASequence", "SingleRecordDNAFASTAFormat",
-    "SingleRecordDNAFASTADirectoryFormat"]
+    "SingleRecordDNAFASTADirectoryFormat", "LocalAlignmentSearchResults",
+    "LocalAlignmentSearchResultsFormat",
+    "LocalAlignmentSearchResultsDirectoryFormat"]
