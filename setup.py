@@ -27,7 +27,7 @@ setup(
     },
     package_data={
         "q2_dwq2": ["citations.bib"],
-        "q2_dwq2.tests": ["data/*"],
+        "q2_dwq2.tests": ["data/*", "data/search-and-summarize/*"],
     },
     zip_safe=False,
 )

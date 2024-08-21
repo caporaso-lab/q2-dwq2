@@ -6,9 +6,12 @@
 # The full license is in the file LICENSE, distributed with this software.
 # ----------------------------------------------------------------------------
 
+import importlib.resources
+
 import skbio
 
 import qiime2
+from q2_types.feature_data import DNAFASTAFormat
 
 
 def seq1_factory():
@@ -45,4 +48,42 @@ def align_and_summarize_example_1(use):
         use.UsageInputs(seq1=seq1, seq2=seq2),
         use.UsageOutputNames(aligned_sequences='msa',
                              msa_summary='msa_summary'),
+    )
+
+
+def _get_filepath_from_tests(path):
+    # this utility function may be transferred to the QIIME 2 framework
+    # track progress here: https://github.com/qiime2/qiime2/issues/792
+    return importlib.resources.files('q2_dwq2.tests') / path
+
+
+def query1_factory():
+    fp = _get_filepath_from_tests('data/search-and-summarize/query.fasta')
+    return qiime2.Artifact.import_data(
+        "FeatureData[Sequence]", fp, view_type=DNAFASTAFormat
+    )
+
+
+def reference1_factory():
+    fp = _get_filepath_from_tests('data/search-and-summarize/reference.fasta')
+    return qiime2.Artifact.import_data(
+        "FeatureData[Sequence]", fp, view_type=DNAFASTAFormat
+    )
+
+
+def search_and_summarize_example_1(use):
+    query_seqs = use.init_artifact('query_seqs', query1_factory)
+    reference_seqs = use.init_artifact('reference_seqs', reference1_factory)
+    use.comment("This is an example of running this Pipeline serially.")
+    use.comment("The modification to run this in parallel depends on the "
+                "interface you're using (for example, using q2cli you would "
+                "append the --parallel flag).")
+
+    hits, hits_table, = use.action(
+        use.UsageAction(plugin_id='dwq2',
+                        action_id='search_and_summarize'),
+        use.UsageInputs(query_seqs=query_seqs,
+                        reference_seqs=reference_seqs,
+                        split_size=1),
+        use.UsageOutputNames(hits='hits', hits_table='hits-table')
     )

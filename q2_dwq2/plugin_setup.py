@@ -17,7 +17,9 @@ from q2_dwq2._methods import (nw_align, local_alignment_search,
 from q2_dwq2._visualizers import (
     summarize_alignment, tabulate_las_results)
 from q2_dwq2._pipelines import align_and_summarize, search_and_summarize
-from q2_dwq2._examples import nw_align_example_1, align_and_summarize_example_1
+from q2_dwq2._examples import (nw_align_example_1,
+                               align_and_summarize_example_1,
+                               search_and_summarize_example_1)
 from q2_dwq2 import (
     SingleDNASequence, SingleRecordDNAFASTAFormat,
     SingleRecordDNAFASTADirectoryFormat, LocalAlignmentSearchResults,
@@ -280,7 +282,7 @@ plugin.pipelines.register_function(
     description=("Perform local alignment search of a query sequence against "
                  "reference sequences and report the results in a table."),
     citations=[],
-    examples={}
+    examples={'Serial local alignment search': search_and_summarize_example_1}
 )
 
 importlib.import_module('q2_dwq2._transformers')
