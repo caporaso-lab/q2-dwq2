@@ -28,6 +28,7 @@ setup(
     package_data={
         "q2_dwq2": ["citations.bib"],
         "q2_dwq2.tests": ["data/*"],
+        "q2_dwq2.examples": ["data/**/*"],
     },
     zip_safe=False,
 )
