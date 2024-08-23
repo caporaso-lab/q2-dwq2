@@ -81,6 +81,14 @@ class SearchAndSummarizeTests(TestPluginBase):
         self.reference_sequences_art = qiime2.Artifact.import_data(
             "FeatureData[Sequence]", reference_sequences, view_type=DNAIterator
         )
+        metadata_df = pd.DataFrame([
+            ['r1', 'abc;def', 10101],
+            ['r2', 'ghi;jkl;mno', 101],
+            ['r3', 'pqr; stu', 110011],
+            ['r4', 'vwxyz', 424242]],
+            columns=['sample-id', 'some column', 'another'])
+        metadata_df.set_index('sample-id', inplace=True)
+        self.metadata = qiime2.Metadata(metadata_df)
 
     def _test_simple1_helper(self, observed_hits, observed_viz):
         expected_hits = pd.DataFrame([
@@ -120,6 +128,24 @@ class SearchAndSummarizeTests(TestPluginBase):
         observed_hits, observed_viz = self.search_and_summarize_pipeline(
             self.query_sequences_art, self.reference_sequences_art)
         self._test_simple1_helper(observed_hits, observed_viz)
+
+    def test_metadata1_serial(self):
+
+        observed_hits, observed_viz = self.search_and_summarize_pipeline(
+            self.query_sequences_art, self.reference_sequences_art,
+            reference_metadata=self.metadata)
+        self._test_simple1_helper(observed_hits, observed_viz)
+
+        # check that metadata is included in output Visualization
+        index_fp = observed_viz.get_index_paths(relative=False)['html']
+        with open(index_fp, 'r') as fh:
+            observed_index = fh.read()
+            self.assertIn('ghi;jkl;mno', observed_index)
+            self.assertIn('some column', observed_index)
+            self.assertIn('110011', observed_index)
+            # metadata associated with ids not referenced in hits does
+            # not show up in observed
+            self.assertNotIn('424242', observed_index)
 
     def test_simple1_parallel(self):
         with ParallelConfig():

@@ -30,6 +30,7 @@ def align_and_summarize(
 
 def search_and_summarize(
         ctx, query_seqs, reference_seqs,
+        reference_metadata=None,
         n=_las_defaults['n'],
         split_size=_split_seqs_defaults['split_size'],
         title=_tabulate_las_defaults['title'],
@@ -53,6 +54,7 @@ def search_and_summarize(
         las_results.append(las_result)
 
     las_results, = combine_action(las_results)
-    result_table, = tabulate_las_results_action(las_results, title=title)
+    result_table, = tabulate_las_results_action(
+        las_results, title=title, reference_metadata=reference_metadata)
 
     return (las_results, result_table)
