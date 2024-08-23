@@ -9,7 +9,7 @@
 import importlib
 
 from qiime2.plugin import (Citations, Plugin, Float, Range, Visualization, Int,
-                           Str, Collection)
+                           Str, Collection, Metadata)
 from q2_types.feature_data import FeatureData, AlignedSequence, Sequence
 from q2_dwq2 import __version__
 from q2_dwq2._methods import (nw_align, local_alignment_search,
@@ -197,9 +197,11 @@ plugin.visualizers.register_function(
     citations=[],
 )
 
-_tabulate_las_parameters = {'title': Str}
+_tabulate_las_parameters = {'title': Str,
+                            'reference_metadata': Metadata}
 _tabulate_las_parameter_descriptions = {
-    'title': 'Title to use inside visualization.'
+    'title': 'Title to use inside visualization.',
+    'reference_metadata': 'Reference metadata to be integrated in output.'
 }
 
 plugin.visualizers.register_function(

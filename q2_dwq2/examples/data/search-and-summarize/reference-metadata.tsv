@@ -1,0 +1,21 @@
+id	domain	phylum	class	order	family	genus	species	gene location	ssu length	contig length
+RS_GCF_000620805.1~NZ_KK211187.1-#3	Bacteria	Bacillota	Bacilli	Exiguobacterales	Exiguobacteraceae	Exiguobacterium_A	Exiguobacterium_A undae	338855..340301	1447	3126126
+RS_GCF_900459785.1~NZ_UHGY01000002.1	Bacteria	Bacillota	Bacilli	Lactobacillales	Streptococcaceae	Streptococcus	Streptococcus pyogenes	16841..18385	1545	1836331
+RS_GCF_024758665.1~NZ_CP094950.1-#4	Bacteria	Bacillota	Bacilli	Lactobacillales	Lactobacillaceae	Lactiplantibacillus	Lactiplantibacillus plantarum	2433818..2435382	1565	3230328
+RS_GCF_019355415.1~NZ_CP049290.1-#6	Bacteria	Pseudomonadota	Gammaproteobacteria	Enterobacterales	Enterobacteriaceae	Enterobacter	Enterobacter hormaechei_B	476185..477723	1539	4903326
+GB_GCA_001034065.1~KQ089641.1-#4	Bacteria	Pseudomonadota	Gammaproteobacteria	Enterobacterales	Enterobacteriaceae	Klebsiella	Klebsiella variicola	819912..820216	305	2799861
+RS_GCF_000640835.1~NZ_KK227193.1	Bacteria	Bacillota	Bacilli	Staphylococcales	Staphylococcaceae	Staphylococcus	Staphylococcus aureus	412569..414118	1550	416113
+RS_GCF_021533575.1~NZ_JAIKUL010000067.1	Bacteria	Pseudomonadota	Gammaproteobacteria	Enterobacterales	Enterobacteriaceae	Escherichia	Escherichia coli	4..503	500	524
+RS_GCF_002283275.1~NZ_NQWV01000054.1	Bacteria	Pseudomonadota	Gammaproteobacteria	Enterobacterales	Enterobacteriaceae	Salmonella	Salmonella enterica	2..442	441	447
+RS_GCF_003368425.2~NZ_QSMS02000004.1-#3	Bacteria	Pseudomonadota	Gammaproteobacteria	Enterobacterales	Enterobacteriaceae	Escherichia	Escherichia coli	2532173..2533710	1538	3780032
+RS_GCF_002547115.1~NZ_NNYU01000079.1	Bacteria	Pseudomonadota	Gammaproteobacteria	Enterobacterales	Enterobacteriaceae	Escherichia	Escherichia coli	150..1687	1538	1698
+GB_GCA_000171035.2~ABDL02000058.1	Bacteria	Bacillota	Bacilli	Bacillales	Bacillaceae_G	Bacillus_A	Bacillus_A paranthracis	4704..6253	1550	6309
+RS_GCF_029025045.1~NZ_CP118911.1-#9	Bacteria	Bacillota	Bacilli	Bacillales	Bacillaceae	Bacillus	Bacillus velezensis	3344838..3346385	1548	4371975
+GB_GCA_948682535.1~CAPPVW010000159.1	Bacteria	Campylobacterota	Campylobacteria	Campylobacterales	Helicobacteraceae	Helicobacter_C	Helicobacter_C japonicus	1..848	848	848
+RS_GCF_000585375.1~NZ_KK073874.1-#2	Bacteria	Actinomycetota	Actinomycetes	Mycobacteriales	Cryptosporangiaceae	Cryptosporangium	Cryptosporangium arvum	1844671..1846183	1513	9195993
+RS_GCF_000624895.2~NZ_CP007396.2-#6	Bacteria	Pseudomonadota	Gammaproteobacteria	Enterobacterales	Enterobacteriaceae	Salmonella	Salmonella enterica	3452081..3453618	1538	4685838
+RS_GCF_001036725.1~NZ_LEJZ01000149.1	Bacteria	Pseudomonadota	Gammaproteobacteria	Pseudomonadales	Pseudomonadaceae	Pseudomonas	Pseudomonas aeruginosa	1..348	348	349
+RS_GCF_000949965.1~NZ_JZTC01000078.1	Bacteria	Pseudomonadota	Gammaproteobacteria	Enterobacterales	Vibrionaceae	Photobacterium	Photobacterium kishitanii	13..1077	1065	1081
+GB_GCA_949503465.1~CATBHR010000016.1	Bacteria	Bacillota_A	Clostridia	Christensenellales	Borkfalkiaceae	Gallimonas	Gallimonas sp910585595	30509..30836	328	30836
+RS_GCF_011090075.1~NZ_WSUO01000039.1	Bacteria	Pseudomonadota	Gammaproteobacteria	Enterobacterales	Enterobacteriaceae	Salmonella	Salmonella enterica	429..1967	1539	5374
+GB_GCA_000333535.1~BADH01000751.1-#2	Bacteria	Pseudomonadota	Gammaproteobacteria	Enterobacterales	Enterobacteriaceae	Kosakonia	Kosakonia cowanii	7253..7466	214	34707

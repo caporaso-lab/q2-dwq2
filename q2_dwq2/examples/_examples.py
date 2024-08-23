@@ -73,9 +73,17 @@ def reference1_factory():
     )
 
 
+def metadata1_factory():
+    fp = get_filepath_from_package(
+        'examples/data/search-and-summarize/reference-metadata.tsv')
+    return qiime2.Metadata.load(fp)
+
+
 def search_and_summarize_example_1(use):
     query_seqs = use.init_artifact('query_seqs', query1_factory)
     reference_seqs = use.init_artifact('reference_seqs', reference1_factory)
+    reference_metadata = use.init_artifact('reference_metadata',
+                                           metadata1_factory)
     use.comment("This is an example of running this Pipeline serially.")
     use.comment("The modification to run this in parallel depends on the "
                 "interface you're using (for example, using q2cli you would "
@@ -86,6 +94,7 @@ def search_and_summarize_example_1(use):
                         action_id='search_and_summarize'),
         use.UsageInputs(query_seqs=query_seqs,
                         reference_seqs=reference_seqs,
+                        reference_metadata=reference_metadata,
                         split_size=1),
         use.UsageOutputNames(hits='hits', hits_table='hits-table')
     )
